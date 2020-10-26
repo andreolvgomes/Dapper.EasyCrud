@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Dapper.EasyCrud;
 using Microsoft.CSharp.RuntimeBinder;
 
 namespace Dapper

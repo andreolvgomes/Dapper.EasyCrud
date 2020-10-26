@@ -8,6 +8,7 @@ using System;
 using System.Data.SQLite;
 using MySql.Data.MySqlClient;
 using Npgsql;
+using Dapper.EasyCrud;
 
 namespace Dapper.EasyCrudTests
 {
@@ -181,7 +182,6 @@ namespace Dapper.EasyCrudTests
 
         private IDbConnection GetOpenConnection()
         {
-
             IDbConnection connection;
             if (_dbtype == Dialect.PostgreSQL)
             {
@@ -200,7 +200,7 @@ namespace Dapper.EasyCrudTests
             }
             else
             {
-                connection = new SqlConnection(@"Data Source = .\sqlexpress;Initial Catalog=DapperSimpleCrudTestDb;Integrated Security=True;MultipleActiveResultSets=true;");
+                connection = new SqlConnection(Settings.SqlServer());
                 DapperEasyCrud.SetDialect(Dialect.SQLServer);
             }
 

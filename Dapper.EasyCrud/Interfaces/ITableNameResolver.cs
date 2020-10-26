@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Dapper
+namespace Dapper.EasyCrud
 {
     public interface ITableNameResolver
     {
