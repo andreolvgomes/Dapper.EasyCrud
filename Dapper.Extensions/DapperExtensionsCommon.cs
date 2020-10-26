@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Dapper
 {
-    public static partial class SimpleCRUD
+    public static partial class DapperExtensions
     {
         //build update statement based on list on an entity
         private static void BuildUpdateSet<T>(T entityToUpdate, StringBuilder masterSb)
@@ -94,7 +94,6 @@ namespace Dapper
         {
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_BuildInsertValues", sb =>
             {
-
                 var props = GetScaffoldableProperties<T>().ToArray();
                 for (var i = 0; i < props.Count(); i++)
                 {
@@ -166,10 +165,7 @@ namespace Dapper
         private static IEnumerable<PropertyInfo> GetScaffoldableProperties<T>()
         {
             IEnumerable<PropertyInfo> props = typeof(T).GetProperties();
-
             props = props.Where(p => p.GetCustomAttributes(true).Any(attr => attr.GetType().Name == typeof(EditableAttribute).Name && !IsEditable(p)) == false);
-
-
             return props.Where(p => p.PropertyType.IsSimpleType() || IsEditable(p));
         }
 
@@ -262,28 +258,22 @@ namespace Dapper
         private static string GetTableName(Type type)
         {
             string tableName;
-
             if (TableNames.TryGetValue(type, out tableName))
                 return tableName;
 
             tableName = _tableNameResolver.ResolveTableName(type);
-
             TableNames.AddOrUpdate(type, tableName, (t, v) => tableName);
-
             return tableName;
         }
 
         private static string GetColumnName(PropertyInfo propertyInfo)
         {
             string columnName, key = string.Format("{0}.{1}", propertyInfo.DeclaringType, propertyInfo.Name);
-
             if (ColumnNames.TryGetValue(key, out columnName))
                 return columnName;
 
             columnName = _columnNameResolver.ResolveColumnName(propertyInfo);
-
             ColumnNames.AddOrUpdate(key, columnName, (t, v) => columnName);
-
             return columnName;
         }
 

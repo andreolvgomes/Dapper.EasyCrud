@@ -19,7 +19,7 @@
 
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard2.0\Dapper.SimpleCRUD.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\netstandard2.0\DapperExtensions.xml</DocumentationFile>
   </PropertyGroup>
 
 

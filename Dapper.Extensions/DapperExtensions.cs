@@ -11,11 +11,11 @@ using Microsoft.CSharp.RuntimeBinder;
 namespace Dapper
 {
     /// <summary>
-    /// Main class for Dapper.SimpleCRUD extensions
+    /// Main class for DapperExtensions extensions
     /// </summary>
-    public static partial class SimpleCRUD
+    public static partial class DapperExtensions
     {
-        static SimpleCRUD()
+        static DapperExtensions()
         {
             SetDialect(_dialect);
         }
@@ -127,6 +127,7 @@ namespace Dapper
             sb.Append("select ");
             if (param == null)
                 sb.Append("top 1 ");
+
             //create a new empty instance of the type to get the base properties
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
             sb.AppendFormat(" from {0}", name);
@@ -181,7 +182,9 @@ namespace Dapper
 
             var dynParms = new DynamicParameters();
             if (idProps.Count == 1)
+            {
                 dynParms.Add("@" + idProps.First().Name, id);
+            }
             else
             {
                 foreach (var prop in idProps)
@@ -256,7 +259,6 @@ namespace Dapper
             //create a new empty instance of the type to get the base properties
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
             sb.AppendFormat(" from {0}", name);
-
             sb.Append(" " + conditions);
 
             if (Debugger.IsAttached)
@@ -314,9 +316,7 @@ namespace Dapper
             var sb = new StringBuilder();
             var query = _getPagedListSql;
             if (string.IsNullOrEmpty(orderby))
-            {
                 orderby = GetColumnName(idProps.First());
-            }
 
             //create a new empty instance of the type to get the base properties
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
@@ -378,10 +378,9 @@ namespace Dapper
             var baseType = typeof(TKey);
             var underlyingType = Nullable.GetUnderlyingType(baseType);
             var keytype = underlyingType ?? baseType;
+
             if (keytype != typeof(int) && keytype != typeof(uint) && keytype != typeof(long) && keytype != typeof(ulong) && keytype != typeof(short) && keytype != typeof(ushort) && keytype != typeof(Guid) && keytype != typeof(string))
-            {
                 throw new Exception("Invalid return type");
-            }
 
             var name = GetTableName(entity);
             var sb = new StringBuilder();
@@ -410,13 +409,9 @@ namespace Dapper
             }
 
             if ((keytype == typeof(int) || keytype == typeof(long)) && Convert.ToInt64(idProps.First().GetValue(entity, null)) == 0)
-            {
                 sb.Append(";" + _getIdentitySql);
-            }
             else
-            {
                 keyHasPredefinedValue = true;
-            }
 
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("Insert: {0}", sb));
@@ -450,12 +445,10 @@ namespace Dapper
             StringBuilderCache(masterSb, $"{typeof(TEntity).FullName}_Update", sb =>
             {
                 var idProps = GetIdProperties(entity).ToList();
-
                 if (!idProps.Any())
                     throw new ArgumentException("Entity must have at least one [Key] or Id property");
 
                 var name = GetTableName(entity);
-
                 sb.AppendFormat("update {0}", name);
 
                 sb.AppendFormat(" set ");
@@ -487,16 +480,12 @@ namespace Dapper
             var masterSb = new StringBuilder();
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_Delete", sb =>
             {
-
                 var idProps = GetIdProperties(entity).ToList();
-
                 if (!idProps.Any())
                     throw new ArgumentException("Entity must have at least one [Key] or Id property");
 
                 var name = GetTableName(entity);
-
                 sb.AppendFormat("delete from {0}", name);
-
                 sb.Append(" where ");
                 BuildWhere<T>(sb, idProps, entity);
 
@@ -529,7 +518,6 @@ namespace Dapper
                 throw new ArgumentException("Delete<T> only supports an entity with a [Key] or Id property");
 
             var name = GetTableName(currenttype);
-
             var sb = new StringBuilder();
             sb.AppendFormat("Delete from {0} where ", name);
 
