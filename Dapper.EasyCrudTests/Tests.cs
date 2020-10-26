@@ -9,7 +9,7 @@ using System.Data.SQLite;
 using MySql.Data.MySqlClient;
 using Npgsql;
 
-namespace Dapper.ExtensionsTests
+namespace Dapper.EasyCrudTests
 {
     #region DTOClasses
     [Table("Users")]
@@ -186,22 +186,22 @@ namespace Dapper.ExtensionsTests
             if (_dbtype == Dialect.PostgreSQL)
             {
                 connection = new NpgsqlConnection(String.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};", "localhost", "5432", "postgres", "postgrespass", "testdb"));
-                DapperExtensions.SetDialect(Dialect.PostgreSQL);
+                DapperEasyCrud.SetDialect(Dialect.PostgreSQL);
             }
             else if (_dbtype == Dialect.SQLite)
             {
                 connection = new SQLiteConnection("Data Source=MyDatabase.sqlite;Version=3;");
-                DapperExtensions.SetDialect(Dialect.SQLite);
+                DapperEasyCrud.SetDialect(Dialect.SQLite);
             }
             else if (_dbtype == Dialect.MySQL)
             {
                 connection = new MySqlConnection(String.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};", "localhost", "3306", "root", "admin", "testdb"));
-                DapperExtensions.SetDialect(Dialect.MySQL);
+                DapperEasyCrud.SetDialect(Dialect.MySQL);
             }
             else
             {
                 connection = new SqlConnection(@"Data Source = .\sqlexpress;Initial Catalog=DapperSimpleCrudTestDb;Integrated Security=True;MultipleActiveResultSets=true;");
-                DapperExtensions.SetDialect(Dialect.SQLServer);
+                DapperEasyCrud.SetDialect(Dialect.SQLServer);
             }
 
             connection.Open();
@@ -670,10 +670,10 @@ namespace Dapper.ExtensionsTests
 
         public void TestChangeDialect()
         {
-            DapperExtensions.SetDialect(Dialect.SQLServer);
-            DapperExtensions.GetDialect().IsEqualTo(Dialect.SQLServer.ToString());
-            DapperExtensions.SetDialect(Dialect.PostgreSQL);
-            DapperExtensions.GetDialect().IsEqualTo(Dialect.PostgreSQL.ToString());
+            DapperEasyCrud.SetDialect(Dialect.SQLServer);
+            DapperEasyCrud.GetDialect().IsEqualTo(Dialect.SQLServer.ToString());
+            DapperEasyCrud.SetDialect(Dialect.PostgreSQL);
+            DapperEasyCrud.GetDialect().IsEqualTo(Dialect.PostgreSQL.ToString());
         }
 
 

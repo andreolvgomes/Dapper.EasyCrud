@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Dapper
 {
-    public static partial class DapperExtensions
+    public static partial class DapperEasyCrud
     {
         //build update statement based on list on an entity
         private static void BuildUpdateSet<T>(T entityToUpdate, StringBuilder masterSb)

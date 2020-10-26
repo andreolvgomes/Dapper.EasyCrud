@@ -10,17 +10,17 @@ namespace Dapper
     {
         public virtual string ResolveTableName(Type type)
         {
-            var tableName = DapperExtensions.Encapsulate(type.Name);
+            var tableName = DapperEasyCrud.Encapsulate(type.Name);
 
             var tableattr = type.GetCustomAttributes(true).SingleOrDefault(attr => attr.GetType().Name == typeof(TableAttribute).Name) as dynamic;
             if (tableattr != null)
             {
-                tableName = DapperExtensions.Encapsulate(tableattr.Name);
+                tableName = DapperEasyCrud.Encapsulate(tableattr.Name);
                 try
                 {
                     if (!String.IsNullOrEmpty(tableattr.Schema))
                     {
-                        string schemaName = DapperExtensions.Encapsulate(tableattr.Schema);
+                        string schemaName = DapperEasyCrud.Encapsulate(tableattr.Schema);
                         tableName = String.Format("{0}.{1}", schemaName, tableName);
                     }
                 }

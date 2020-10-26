@@ -7,7 +7,7 @@ using System.Reflection;
 using MySql.Data.MySqlClient;
 using Npgsql;
 
-namespace Dapper.ExtensionsTests
+namespace Dapper.EasyCrudTests
 {
     class Program
     {

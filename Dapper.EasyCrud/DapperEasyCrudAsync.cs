@@ -1,123 +1,19 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using Microsoft.CSharp.RuntimeBinder;
+using System.Threading.Tasks;
 
 namespace Dapper
 {
     /// <summary>
     /// Main class for DapperExtensions extensions
     /// </summary>
-    public static partial class DapperExtensions
+    public static partial class DapperEasyCrud
     {
-        static DapperExtensions()
-        {
-            SetDialect(_dialect);
-        }
-
-        private static Dialect _dialect = Dialect.SQLServer;
-        private static string _encapsulation;
-        private static string _getIdentitySql;
-        private static string _getPagedListSql;
-
-        private static readonly ConcurrentDictionary<Type, string> TableNames = new ConcurrentDictionary<Type, string>();
-        private static readonly ConcurrentDictionary<string, string> ColumnNames = new ConcurrentDictionary<string, string>();
-
-        private static readonly ConcurrentDictionary<string, string> StringBuilderCacheDict = new ConcurrentDictionary<string, string>();
-        private static bool StringBuilderCacheEnabled = true;
-
-        private static ITableNameResolver _tableNameResolver = new TableNameResolver();
-        private static IColumnNameResolver _columnNameResolver = new ColumnNameResolver();
-
-        /// <summary>
-        /// Append a Cached version of a strinbBuilderAction result based on a cacheKey
-        /// </summary>
-        /// <param name="sb"></param>
-        /// <param name="cacheKey"></param>
-        /// <param name="stringBuilderAction"></param>
-        private static void StringBuilderCache(StringBuilder sb, string cacheKey, Action<StringBuilder> stringBuilderAction)
-        {
-            if (StringBuilderCacheEnabled && StringBuilderCacheDict.TryGetValue(cacheKey, out string value))
-            {
-                sb.Append(value);
-                return;
-            }
-
-            StringBuilder newSb = new StringBuilder();
-            stringBuilderAction(newSb);
-            value = newSb.ToString();
-            StringBuilderCacheDict.AddOrUpdate(cacheKey, value, (t, v) => value);
-            sb.Append(value);
-        }
-
-        /// <summary>
-        /// Returns the current dialect name
-        /// </summary>
-        /// <returns></returns>
-        public static string GetDialect()
-        {
-            return _dialect.ToString();
-        }
-
-        /// <summary>
-        /// Sets the database dialect 
-        /// </summary>
-        /// <param name="dialect"></param>
-        public static void SetDialect(Dialect dialect)
-        {
-            switch (dialect)
-            {
-                case Dialect.PostgreSQL:
-                    _dialect = Dialect.PostgreSQL;
-                    _encapsulation = "\"{0}\"";
-                    _getIdentitySql = string.Format("SELECT LASTVAL() AS id");
-                    _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} LIMIT {RowsPerPage} OFFSET (({PageNumber}-1) * {RowsPerPage})";
-                    break;
-                case Dialect.SQLite:
-                    _dialect = Dialect.SQLite;
-                    _encapsulation = "\"{0}\"";
-                    _getIdentitySql = string.Format("SELECT LAST_INSERT_ROWID() AS id");
-                    _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} LIMIT {RowsPerPage} OFFSET (({PageNumber}-1) * {RowsPerPage})";
-                    break;
-                case Dialect.MySQL:
-                    _dialect = Dialect.MySQL;
-                    _encapsulation = "`{0}`";
-                    _getIdentitySql = string.Format("SELECT LAST_INSERT_ID() AS id");
-                    _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} LIMIT {Offset},{RowsPerPage}";
-                    break;
-                default:
-                    _dialect = Dialect.SQLServer;
-                    _encapsulation = "[{0}]";
-                    _getIdentitySql = string.Format("SELECT CAST(SCOPE_IDENTITY()  AS BIGINT) AS [id]");
-                    _getPagedListSql = "SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY {OrderBy}) AS PagedNumber, {SelectColumns} FROM {TableName} {WhereClause}) AS u WHERE PagedNumber BETWEEN (({PageNumber}-1) * {RowsPerPage} + 1) AND ({PageNumber} * {RowsPerPage})";
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Sets the table name resolver
-        /// </summary>
-        /// <param name="resolver">The resolver to use when requesting the format of a table name</param>
-        public static void SetTableNameResolver(ITableNameResolver resolver)
-        {
-            _tableNameResolver = resolver;
-        }
-
-        /// <summary>
-        /// Sets the column name resolver
-        /// </summary>
-        /// <param name="resolver">The resolver to use when requesting the format of a column name</param>
-        public static void SetColumnNameResolver(IColumnNameResolver resolver)
-        {
-            _columnNameResolver = resolver;
-        }
-
-        public static T Find<T>(this IDbConnection cnn, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static async Task<T> FindAsync<T>(this IDbConnection cnn, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -127,7 +23,6 @@ namespace Dapper
             sb.Append("select ");
             if (param == null)
                 sb.Append("top 1 ");
-
             //create a new empty instance of the type to get the base properties
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
             sb.AppendFormat(" from {0}", name);
@@ -141,11 +36,12 @@ namespace Dapper
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("Find<{0}>: {1}", currenttype, sb));
 
-            return cnn.Query<T>(sb.ToString(), param, transaction, true, commandTimeout).FirstOrDefault();
+            var query = await cnn.QueryAsync<T>(sb.ToString(), param, transaction, commandTimeout);
+            return query.FirstOrDefault();
         }
 
         /// <summary>
-        /// <para>By default queries the table matching the class name</para>
+        /// <para>By default queries the table matching the class name asynchronously </para>
         /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
         /// <para>By default filters on the Id column</para>
         /// <para>-Id column name can be overridden by adding an attribute on your primary key property [Key]</para>
@@ -158,7 +54,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Returns a single entity by a single id from table T.</returns>
-        public static T FindById<T>(this IDbConnection cnn, object id, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static async Task<T> FindByIdAsync<T>(this IDbConnection cnn, object id, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var idProps = GetIdProperties(currenttype).ToList();
@@ -194,11 +90,12 @@ namespace Dapper
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("Get<{0}>: {1} with Id: {2}", currenttype, sb, id));
 
-            return cnn.Query<T>(sb.ToString(), dynParms, transaction, true, commandTimeout).FirstOrDefault();
+            var query = await cnn.QueryAsync<T>(sb.ToString(), dynParms, transaction, commandTimeout);
+            return query.FirstOrDefault();
         }
 
         /// <summary>
-        /// <para>By default queries the table matching the class name</para>
+        /// <para>By default queries the table matching the class name asynchronously</para>
         /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
         /// <para>whereConditions is an anonymous type to filter the results ex: new {Category = 1, SubCategory=2}</para>
         /// <para>Supports transaction and command timeout</para>
@@ -206,17 +103,17 @@ namespace Dapper
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="cnn"></param>
-        /// <param name="param"></param>
+        /// <param name="whereConditions"></param>
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Gets a list of entities with optional exact match where conditions</returns>
-        public static IEnumerable<T> All<T>(this IDbConnection cnn, object param, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<IEnumerable<T>> AllAsync<T>(this IDbConnection cnn, object whereConditions, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
 
             var sb = new StringBuilder();
-            var whereprops = GetAllProperties(param).ToArray();
+            var whereprops = GetAllProperties(whereConditions).ToArray();
             sb.Append("Select ");
             //create a new empty instance of the type to get the base properties
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
@@ -225,13 +122,13 @@ namespace Dapper
             if (whereprops.Any())
             {
                 sb.Append(" where ");
-                BuildWhere<T>(sb, whereprops, param);
+                BuildWhere<T>(sb, whereprops, whereConditions);
             }
 
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
 
-            return cnn.Query<T>(sb.ToString(), param, transaction, true, commandTimeout);
+            return cnn.QueryAsync<T>(sb.ToString(), whereConditions, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -245,11 +142,11 @@ namespace Dapper
         /// <typeparam name="T"></typeparam>
         /// <param name="cnn"></param>
         /// <param name="conditions"></param>
-        /// <param name="param"></param>
+        /// <param name="parameters"></param>
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Gets a list of entities with optional SQL where conditions</returns>
-        public static IEnumerable<T> All<T>(this IDbConnection cnn, string conditions, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<IEnumerable<T>> AllAsync<T>(this IDbConnection cnn, string conditions, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -259,25 +156,26 @@ namespace Dapper
             //create a new empty instance of the type to get the base properties
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
             sb.AppendFormat(" from {0}", name);
+
             sb.Append(" " + conditions);
 
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
 
-            return cnn.Query<T>(sb.ToString(), param, transaction, true, commandTimeout);
+            return cnn.QueryAsync<T>(sb.ToString(), parameters, transaction, commandTimeout);
         }
 
         /// <summary>
-        /// <para>By default queries the table matching the class name</para>
+        /// <para>By default queries the table matching the class name asynchronously</para>
         /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
         /// <para>Returns a list of all entities</para>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="cnn"></param>
         /// <returns>Gets a list of all entities</returns>
-        public static IEnumerable<T> All<T>(this IDbConnection cnn)
+        public static Task<IEnumerable<T>> AllAsync<T>(this IDbConnection cnn)
         {
-            return cnn.All<T>(new { });
+            return cnn.AllAsync<T>(new { });
         }
 
         /// <summary>
@@ -286,7 +184,6 @@ namespace Dapper
         /// <para>conditions is an SQL where clause ex: "where name='bob'" or "where age>=@Age" - not required </para>
         /// <para>orderby is a column or list of columns to order by ex: "lastname, age desc" - not required - default is by primary key</para>
         /// <para>parameters is an anonymous type to pass in named parameter values: new { Age = 15 }</para>
-        /// <para>Supports transaction and command timeout</para>
         /// <para>Returns a list of entities that match where conditions</para>
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -295,17 +192,14 @@ namespace Dapper
         /// <param name="rowsPerPage"></param>
         /// <param name="conditions"></param>
         /// <param name="orderby"></param>
-        /// <param name="param"></param>
+        /// <param name="parameters"></param>
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
-        /// <returns>Gets a paged list of entities with optional exact match where conditions</returns>
-        public static IEnumerable<T> AllPaged<T>(this IDbConnection cnn, int pageNumber, int rowsPerPage, string conditions, string orderby, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        /// <returns>Gets a list of entities with optional exact match where conditions</returns>
+        public static Task<IEnumerable<T>> AllPagedAsync<T>(this IDbConnection cnn, int pageNumber, int rowsPerPage, string conditions, string orderby, object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             if (string.IsNullOrEmpty(_getPagedListSql))
                 throw new Exception("GetListPage is not supported with the current SQL Dialect");
-
-            if (pageNumber < 1)
-                throw new Exception("Page must be greater than 0");
 
             var currenttype = typeof(T);
             var idProps = GetIdProperties(currenttype).ToList();
@@ -331,11 +225,11 @@ namespace Dapper
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("GetListPaged<{0}>: {1}", currenttype, query));
 
-            return cnn.Query<T>(query, param, transaction, true, commandTimeout);
+            return cnn.QueryAsync<T>(query, parameters, transaction, commandTimeout);
         }
 
         /// <summary>
-        /// <para>Inserts a row into the database</para>
+        /// <para>Inserts a row into the database asynchronously</para>
         /// <para>By default inserts into the table matching the class name</para>
         /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
         /// <para>Insert filters out Id column and any columns with the [Key] attribute</para>
@@ -348,9 +242,9 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The ID (primary key) of the newly inserted record if it is identity using the int? type, otherwise null</returns>
-        public static int? Insert<TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int?> InsertAsync<TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            return Insert<int?, TEntity>(cnn, entity, transaction, commandTimeout);
+            return InsertAsync<int?, TEntity>(cnn, entity, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -367,7 +261,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The ID (primary key) of the newly inserted record if it is identity using the defined type, otherwise null</returns>
-        public static TKey Insert<TKey, TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static async Task<TKey> InsertAsync<TKey, TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var idProps = GetIdProperties(entity).ToList();
 
@@ -378,7 +272,6 @@ namespace Dapper
             var baseType = typeof(TKey);
             var underlyingType = Nullable.GetUnderlyingType(baseType);
             var keytype = underlyingType ?? baseType;
-
             if (keytype != typeof(int) && keytype != typeof(uint) && keytype != typeof(long) && keytype != typeof(ulong) && keytype != typeof(short) && keytype != typeof(ushort) && keytype != typeof(Guid) && keytype != typeof(string))
                 throw new Exception("Invalid return type");
 
@@ -405,7 +298,6 @@ namespace Dapper
                 {
                     keyHasPredefinedValue = true;
                 }
-                sb.Append(";select '" + idProps.First().GetValue(entity, null) + "' as id");
             }
 
             if ((keytype == typeof(int) || keytype == typeof(long)) && Convert.ToInt64(idProps.First().GetValue(entity, null)) == 0)
@@ -416,54 +308,53 @@ namespace Dapper
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("Insert: {0}", sb));
 
-            var r = cnn.Query(sb.ToString(), entity, transaction, true, commandTimeout);
-
             if (keytype == typeof(Guid) || keyHasPredefinedValue)
             {
+                await cnn.ExecuteAsync(sb.ToString(), entity, transaction, commandTimeout);
                 return (TKey)idProps.First().GetValue(entity, null);
             }
+            var r = await cnn.QueryAsync(sb.ToString(), entity, transaction, commandTimeout);
             return (TKey)r.First().id;
         }
-
+        
         /// <summary>
-        /// <para>Updates a record or records in the database with only the properties of TEntity</para>
-        /// <para>By default updates records in the table matching the class name</para>
-        /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
-        /// <para>Updates records where the Id property and properties with the [Key] attribute match those in the database.</para>
-        /// <para>Properties marked with attribute [Editable(false)] and complex types are ignored</para>
-        /// <para>Supports transaction and command timeout</para>
-        /// <para>Returns number of rows affected</para>
-        /// </summary>
-        /// <param name="cnn"></param>
-        /// <param name="entity"></param>
+        ///  <para>Updates a record or records in the database asynchronously</para>
+        ///  <para>By default updates records in the table matching the class name</para>
+        ///  <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
+        ///  <para>Updates records where the Id property and properties with the [Key] attribute match those in the database.</para>
+        ///  <para>Properties marked with attribute [Editable(false)] and complex types are ignored</para>
+        ///  <para>Supports transaction and command timeout</para>
+        ///  <para>Returns number of rows affected</para>
+        ///  </summary>
+        ///  <param name="cnn"></param>
+        ///  <param name="entity"></param>
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of affected records</returns>
-        public static int Update<TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> UpdateAsync<TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null, System.Threading.CancellationToken? token = null)
         {
-            var masterSb = new StringBuilder();
-            StringBuilderCache(masterSb, $"{typeof(TEntity).FullName}_Update", sb =>
-            {
-                var idProps = GetIdProperties(entity).ToList();
-                if (!idProps.Any())
-                    throw new ArgumentException("Entity must have at least one [Key] or Id property");
+            var idProps = GetIdProperties(entity).ToList();
+            if (!idProps.Any())
+                throw new ArgumentException("Entity must have at least one [Key] or Id property");
 
-                var name = GetTableName(entity);
-                sb.AppendFormat("update {0}", name);
+            var name = GetTableName(entity);
+            var sb = new StringBuilder();
+            sb.AppendFormat("update {0}", name);
 
-                sb.AppendFormat(" set ");
-                BuildUpdateSet(entity, sb);
-                sb.Append(" where ");
-                BuildWhere<TEntity>(sb, idProps, entity);
+            sb.AppendFormat(" set ");
+            BuildUpdateSet(entity, sb);
+            sb.Append(" where ");
+            BuildWhere<TEntity>(sb, idProps, entity);
 
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("Update: {0}", sb));
-            });
-            return cnn.Execute(masterSb.ToString(), entity, transaction, commandTimeout);
+            if (Debugger.IsAttached)
+                Trace.WriteLine(String.Format("Update: {0}", sb));
+
+            System.Threading.CancellationToken cancelToken = token ?? default(System.Threading.CancellationToken);
+            return cnn.ExecuteAsync(new CommandDefinition(sb.ToString(), entity, transaction, commandTimeout, cancellationToken: cancelToken));
         }
 
         /// <summary>
-        /// <para>Deletes a record or records in the database that match the object passed in</para>
+        /// <para>Deletes a record or records in the database that match the object passed in asynchronously</para>
         /// <para>-By default deletes records in the table matching the class name</para>
         /// <para>Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
         /// <para>Supports transaction and command timeout</para>
@@ -475,28 +366,27 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int Delete<T>(this IDbConnection cnn, T entity, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> DeleteAsync<T>(this IDbConnection cnn, T entity, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            var masterSb = new StringBuilder();
-            StringBuilderCache(masterSb, $"{typeof(T).FullName}_Delete", sb =>
-            {
-                var idProps = GetIdProperties(entity).ToList();
-                if (!idProps.Any())
-                    throw new ArgumentException("Entity must have at least one [Key] or Id property");
+            var idProps = GetIdProperties(entity).ToList();
+            if (!idProps.Any())
+                throw new ArgumentException("Entity must have at least one [Key] or Id property");
 
-                var name = GetTableName(entity);
-                sb.AppendFormat("delete from {0}", name);
-                sb.Append(" where ");
-                BuildWhere<T>(sb, idProps, entity);
+            var name = GetTableName(entity);
+            var sb = new StringBuilder();
+            sb.AppendFormat("delete from {0}", name);
 
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("Delete: {0}", sb));
-            });
-            return cnn.Execute(masterSb.ToString(), entity, transaction, commandTimeout);
+            sb.Append(" where ");
+            BuildWhere<T>(sb, idProps, entity);
+
+            if (Debugger.IsAttached)
+                Trace.WriteLine(String.Format("Delete: {0}", sb));
+
+            return cnn.ExecuteAsync(sb.ToString(), entity, transaction, commandTimeout);
         }
 
         /// <summary>
-        /// <para>Deletes a record or records in the database by ID</para>
+        /// <para>Deletes a record or records in the database by ID asynchronously</para>
         /// <para>By default deletes records in the table matching the class name</para>
         /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
         /// <para>Deletes records where the Id property and properties with the [Key] attribute match those in the database</para>
@@ -509,11 +399,11 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int Delete<T>(this IDbConnection cnn, object id, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> DeleteAsync<T>(this IDbConnection cnn, object id, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var idProps = GetIdProperties(currenttype).ToList();
-
+            
             if (!idProps.Any())
                 throw new ArgumentException("Delete<T> only supports an entity with a [Key] or Id property");
 
@@ -534,13 +424,13 @@ namespace Dapper
             else
             {
                 foreach (var prop in idProps)
-                    dynParms.Add("@" + prop.Name, id.GetType().GetProperty(prop.Name).GetValue(id, null));
+                    dynParms.Add("@" + prop.Name, prop.GetValue(id));
             }
 
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("Delete<{0}> {1}", currenttype, sb));
 
-            return cnn.Execute(sb.ToString(), dynParms, transaction, commandTimeout);
+            return cnn.ExecuteAsync(sb.ToString(), dynParms, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -558,26 +448,24 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int DeleteSeveral<T>(this IDbConnection cnn, object param, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> DeleteListAsync<T>(this IDbConnection cnn, object param, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            var masterSb = new StringBuilder();
-            StringBuilderCache(masterSb, $"{typeof(T).FullName}_DeleteWhere{param?.GetType()?.FullName}", sb =>
+            var currenttype = typeof(T);
+            var name = GetTableName(currenttype);
+
+            var sb = new StringBuilder();
+            var whereprops = GetAllProperties(param).ToArray();
+            sb.AppendFormat("Delete from {0}", name);
+            if (whereprops.Any())
             {
-                var currenttype = typeof(T);
-                var name = GetTableName(currenttype);
+                sb.Append(" where ");
+                BuildWhere<T>(sb, whereprops);
+            }
 
-                var whereprops = GetAllProperties(param).ToArray();
-                sb.AppendFormat("Delete from {0}", name);
-                if (whereprops.Any())
-                {
-                    sb.Append(" where ");
-                    BuildWhere<T>(sb, whereprops);
-                }
+            if (Debugger.IsAttached)
+                Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
 
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
-            });
-            return cnn.Execute(masterSb.ToString(), param, transaction, commandTimeout);
+            return cnn.ExecuteAsync(sb.ToString(), param, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -587,7 +475,6 @@ namespace Dapper
         /// <para>Deletes records where that match the where clause</para>
         /// <para>conditions is an SQL where clause ex: "where name='bob'" or "where age>=@Age"</para>
         /// <para>parameters is an anonymous type to pass in named parameter values: new { Age = 15 }</para>
-        /// <para>Supports transaction and command timeout</para>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="cnn"></param>
@@ -596,44 +483,41 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int DeleteSeveral<T>(this IDbConnection cnn, string conditions, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> DeleteListAsync<T>(this IDbConnection cnn, string conditions, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            var masterSb = new StringBuilder();
-            StringBuilderCache(masterSb, $"{typeof(T).FullName}_DeleteWhere{conditions}", sb =>
-            {
-                if (string.IsNullOrEmpty(conditions))
-                    throw new ArgumentException("DeleteList<T> requires a where clause");
-                if (!conditions.ToLower().Contains("where"))
-                    throw new ArgumentException("DeleteList<T> requires a where clause and must contain the WHERE keyword");
+            if (string.IsNullOrEmpty(conditions))
+                throw new ArgumentException("DeleteList<T> requires a where clause");
+            if (!conditions.ToLower().Contains("where"))
+                throw new ArgumentException("DeleteList<T> requires a where clause and must contain the WHERE keyword");
 
-                var currenttype = typeof(T);
-                var name = GetTableName(currenttype);
+            var currenttype = typeof(T);
+            var name = GetTableName(currenttype);
 
-                sb.AppendFormat("Delete from {0}", name);
-                sb.Append(" " + conditions);
+            var sb = new StringBuilder();
+            sb.AppendFormat("Delete from {0}", name);
+            sb.Append(" " + conditions);
 
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
-            });
-            return cnn.Execute(masterSb.ToString(), param, transaction, commandTimeout);
+            if (Debugger.IsAttached)
+                Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
+
+            return cnn.ExecuteAsync(sb.ToString(), param, transaction, commandTimeout);
         }
 
         /// <summary>
         /// <para>By default queries the table matching the class name</para>
         /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
-        /// <para>Returns a number of records entity by a single id from table T</para>
-        /// <para>Supports transaction and command timeout</para>
         /// <para>conditions is an SQL where clause ex: "where name='bob'" or "where age>=@Age" - not required </para>
-        /// <para>parameters is an anonymous type to pass in named parameter values: new { Age = 15 }</para>
-        /// </summary>
+        /// <para>parameters is an anonymous type to pass in named parameter values: new { Age = 15 }</para>   
+        /// <para>Supports transaction and command timeout</para>
+        /// /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="cnn"></param>
         /// <param name="conditions"></param>
-        /// <param name="param"></param>
+        /// <param name="parameters"></param>
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Returns a count of records.</returns>
-        public static int Count<T>(this IDbConnection cnn, string conditions = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> CountAsync<T>(this IDbConnection cnn, string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -645,7 +529,7 @@ namespace Dapper
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("RecordCount<{0}>: {1}", currenttype, sb));
 
-            return cnn.ExecuteScalar<int>(sb.ToString(), param, transaction, commandTimeout);
+            return cnn.ExecuteScalarAsync<int>(sb.ToString(), parameters, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -661,7 +545,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Returns a count of records.</returns>
-        public static int Count<T>(this IDbConnection cnn, object param, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> CountAsync<T>(this IDbConnection cnn, object param, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -680,7 +564,8 @@ namespace Dapper
             if (Debugger.IsAttached)
                 Trace.WriteLine(String.Format("RecordCount<{0}>: {1}", currenttype, sb));
 
-            return cnn.ExecuteScalar<int>(sb.ToString(), param, transaction, commandTimeout);
+            return cnn.ExecuteScalarAsync<int>(sb.ToString(), param, transaction, commandTimeout);
         }
     }
 }
+

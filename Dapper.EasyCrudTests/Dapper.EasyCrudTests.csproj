@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Dapper.Extensions\Dapper.Extensions.csproj" />
+    <ProjectReference Include="..\Dapper.Extensions\Dapper.EasyCrud.csproj" />
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0'">
