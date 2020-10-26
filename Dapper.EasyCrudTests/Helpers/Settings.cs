@@ -9,7 +9,7 @@ namespace Dapper.EasyCrudTests
         public static string SqlServer(string database = "DapperSimpleCrudTestDb")
         {
             //DapperSimpleCrudTestDb
-            return $@"Data Source=.\sql2;Initial Catalog={database};Integrated Security=True;MultipleActiveResultSets=true;";
+            return $@"Data Source=.\sqlexpress;Initial Catalog={database};Integrated Security=True;MultipleActiveResultSets=true;";
         }
     }
 }
