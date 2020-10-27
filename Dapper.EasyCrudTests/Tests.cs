@@ -97,7 +97,8 @@ namespace Dapper.EasyCrudTests
         {
             using (var connection = GetOpenConnection())
             {
-                var id = connection.Insert<long, BigCar>(new BigCar { Make = "Big", Model = "Car" });
+                //var id = connection.Insert<long, BigCar>(new BigCar { Make = "Big", Model = "Car" });
+                var id = connection.Insert<BigCar>(new BigCar { Make = "Big", Model = "Car" });
                 connection.Delete<BigCar>(id);
 
             }
@@ -111,7 +112,8 @@ namespace Dapper.EasyCrudTests
                 var user = new User { Name = "User1", Age = 10, ScheduledDayOff = DayOfWeek.Friday };
 
                 //act
-                var id = connection.Insert<int?, UserEditableSettings>(user);
+                //var id = connection.Insert<int?, UserEditableSettings>(user);
+                var id = connection.Insert<UserEditableSettings>(user);
 
                 //assert
                 var insertedUser = connection.FindById<User>(id);
@@ -370,7 +372,8 @@ namespace Dapper.EasyCrudTests
             {
                 //arrange
                 var user = new User { Name = "User1", Age = 10, ScheduledDayOff = DayOfWeek.Friday };
-                user.Id = connection.Insert(user) ?? 0;
+                //user.Id = connection.Insert(user) ?? 0;
+                user.Id = (int)connection.Insert(user);
 
                 user.ScheduledDayOff = DayOfWeek.Thursday;
                 var userAsEditableSettings = (UserEditableSettings)user;
@@ -534,7 +537,8 @@ namespace Dapper.EasyCrudTests
         {
             using (var connection = GetOpenConnection())
             {
-                var id = connection.Insert<Guid, GUIDTest>(new GUIDTest { Name = "GuidUser" });
+                //var id = connection.Insert<Guid, GUIDTest>(new GUIDTest { Name = "GuidUser" });
+                var id = connection.Insert<GUIDTest>(new GUIDTest { Name = "GuidUser" });
                 id.GetType().Name.IsEqualTo("Guid");
                 var record = connection.FindById<GUIDTest>(id);
                 record.Name.IsEqualTo("GuidUser");
@@ -555,7 +559,8 @@ namespace Dapper.EasyCrudTests
             using (var connection = GetOpenConnection())
             {
                 var guid = new Guid("1a6fb33d-7141-47a0-b9fa-86a1a1945da9");
-                var id = connection.Insert<Guid, GUIDTest>(new GUIDTest { Name = "InsertIntoTableWithGuidKey", Id = guid });
+                //var id = connection.Insert<Guid, GUIDTest>(new GUIDTest { Name = "InsertIntoTableWithGuidKey", Id = guid });
+                var id = connection.Insert<GUIDTest>(new GUIDTest { Name = "InsertIntoTableWithGuidKey", Id = guid });
                 id.IsEqualTo(guid);
                 connection.Delete<GUIDTest>(id);
             }
@@ -566,7 +571,8 @@ namespace Dapper.EasyCrudTests
             using (var connection = GetOpenConnection())
             {
                 var guid = new Guid("2a6fb33d-7141-47a0-b9fa-86a1a1945da9");
-                connection.Insert<Guid, GUIDTest>(new GUIDTest { Name = "GetRecordWithGuidKey", Id = guid });
+                //connection.Insert<Guid, GUIDTest>(new GUIDTest { Name = "GetRecordWithGuidKey", Id = guid });
+                connection.Insert<GUIDTest>(new GUIDTest { Name = "GetRecordWithGuidKey", Id = guid });
                 var id = connection.All<GUIDTest>().First().Id;
                 var record = connection.FindById<GUIDTest>(id);
                 record.Name.IsEqualTo("GetRecordWithGuidKey");
@@ -580,7 +586,8 @@ namespace Dapper.EasyCrudTests
             using (var connection = GetOpenConnection())
             {
                 var guid = new Guid("3a6fb33d-7141-47a0-b9fa-86a1a1945da9");
-                connection.Insert<Guid, GUIDTest>(new GUIDTest { Name = "DeleteRecordWithGuidKey", Id = guid });
+                //connection.Insert<Guid, GUIDTest>(new GUIDTest { Name = "DeleteRecordWithGuidKey", Id = guid });
+                connection.Insert<GUIDTest>(new GUIDTest { Name = "DeleteRecordWithGuidKey", Id = guid });
                 var id = connection.All<GUIDTest>().First().Id;
                 connection.Delete<GUIDTest>(id);
                 connection.FindById<GUIDTest>(id).IsNull();
@@ -590,7 +597,8 @@ namespace Dapper.EasyCrudTests
         {
             using (var connection = GetOpenConnection())
             {
-                var id = connection.Insert<string, StringTest>(new StringTest { stringkey = "123xyz", name = "Bob" });
+                //var id = connection.Insert<string, StringTest>(new StringTest { stringkey = "123xyz", name = "Bob" });
+                var id = connection.Insert<StringTest>(new StringTest { stringkey = "123xyz", name = "Bob" });
                 id.IsEqualTo("123xyz");
                 connection.Delete<StringTest>((object)id);
             }
@@ -619,10 +627,10 @@ namespace Dapper.EasyCrudTests
         {
             using (var connection = GetOpenConnection())
             {
-                await connection.InsertAsync<Guid, GUIDTest>(new GUIDTest { Name = "MultiInsertWithGuidAsync" });
-                await connection.InsertAsync<Guid, GUIDTest>(new GUIDTest { Name = "MultiInsertWithGuidAsync" });
-                await connection.InsertAsync<Guid, GUIDTest>(new GUIDTest { Name = "MultiInsertWithGuidAsync" });
-                await connection.InsertAsync<Guid, GUIDTest>(new GUIDTest { Name = "MultiInsertWithGuidAsync" });
+                await connection.InsertAsync<GUIDTest>(new GUIDTest { Name = "MultiInsertWithGuidAsync" });
+                await connection.InsertAsync<GUIDTest>(new GUIDTest { Name = "MultiInsertWithGuidAsync" });
+                await connection.InsertAsync<GUIDTest>(new GUIDTest { Name = "MultiInsertWithGuidAsync" });
+                await connection.InsertAsync<GUIDTest>(new GUIDTest { Name = "MultiInsertWithGuidAsync" });
                 //tiny wait to let the inserts happen
                 System.Threading.Thread.Sleep(300);
                 var list = connection.All<GUIDTest>(new { Name = "MultiInsertWithGuidAsync" });
@@ -813,7 +821,7 @@ namespace Dapper.EasyCrudTests
                 var user = new User { Name = "User1", Age = 10, ScheduledDayOff = DayOfWeek.Friday };
 
                 //act
-                var idTask = connection.InsertAsync<int?, UserEditableSettings>(user);
+                var idTask = connection.InsertAsync<UserEditableSettings>(user);
                 idTask.Wait();
                 var id = idTask.Result;
 
@@ -834,7 +842,8 @@ namespace Dapper.EasyCrudTests
             {
                 //arrange
                 var user = new User { Name = "User1", Age = 10, ScheduledDayOff = DayOfWeek.Friday };
-                user.Id = connection.Insert(user) ?? 0;
+                //user.Id = connection.Insert(user) ?? 0;
+                user.Id = (int)connection.Insert(user);
 
                 user.ScheduledDayOff = DayOfWeek.Thursday;
                 var userAsEditableSettings = (UserEditableSettings)user;

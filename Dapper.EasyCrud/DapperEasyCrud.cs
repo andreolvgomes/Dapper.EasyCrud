@@ -336,25 +336,6 @@ namespace Dapper
         }
 
         /// <summary>
-        /// <para>Inserts a row into the database</para>
-        /// <para>By default inserts into the table matching the class name</para>
-        /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
-        /// <para>Insert filters out Id column and any columns with the [Key] attribute</para>
-        /// <para>Properties marked with attribute [Editable(false)] and complex types are ignored</para>
-        /// <para>Supports transaction and command timeout</para>
-        /// <para>Returns the ID (primary key) of the newly inserted record if it is identity using the int? type, otherwise null</para>
-        /// </summary>
-        /// <param name="cnn"></param>
-        /// <param name="entity"></param>
-        /// <param name="transaction"></param>
-        /// <param name="commandTimeout"></param>
-        /// <returns>The ID (primary key) of the newly inserted record if it is identity using the int? type, otherwise null</returns>
-        public static int? Insert<TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            return Insert<int?, TEntity>(cnn, entity, transaction, commandTimeout);
-        }
-
-        /// <summary>
         /// <para>Inserts a row into the database, using ONLY the properties defined by TEntity</para>
         /// <para>By default inserts into the table matching the class name</para>
         /// <para>-Table name can be overridden by adding an attribute on your class [Table("YourTableName")]</para>
@@ -368,15 +349,18 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The ID (primary key) of the newly inserted record if it is identity using the defined type, otherwise null</returns>
-        public static TKey Insert<TKey, TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null)
+        /// //public static TKey Insert<TKey, TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static object Insert<TEntity>(this IDbConnection cnn, TEntity entity, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var idProps = GetIdProperties(entity).ToList();
 
             if (!idProps.Any())
                 throw new ArgumentException("Insert<T> only supports an entity with a [Key] or Id property");
 
+            PropertyInfo propertyId = idProps.FirstOrDefault();
             var keyHasPredefinedValue = false;
-            var baseType = typeof(TKey);
+            //var baseType1 = typeof(TKey);
+            var baseType = propertyId.PropertyType;
             var underlyingType = Nullable.GetUnderlyingType(baseType);
             var keytype = underlyingType ?? baseType;
 
@@ -396,20 +380,20 @@ namespace Dapper
 
             if (keytype == typeof(Guid))
             {
-                var guidvalue = (Guid)idProps.First().GetValue(entity, null);
+                var guidvalue = (Guid)propertyId.GetValue(entity, null);
                 if (guidvalue == Guid.Empty)
                 {
                     var newguid = SequentialGuid();
-                    idProps.First().SetValue(entity, newguid, null);
+                    propertyId.SetValue(entity, newguid, null);
                 }
                 else
                 {
                     keyHasPredefinedValue = true;
                 }
-                sb.Append(";select '" + idProps.First().GetValue(entity, null) + "' as id");
+                sb.Append(";select '" + propertyId.GetValue(entity, null) + "' as id");
             }
 
-            if ((keytype == typeof(int) || keytype == typeof(long)) && Convert.ToInt64(idProps.First().GetValue(entity, null)) == 0)
+            if ((keytype == typeof(int) || keytype == typeof(long)) && Convert.ToInt64(propertyId.GetValue(entity, null)) == 0)
                 sb.Append(";" + _getIdentitySql);
             else
                 keyHasPredefinedValue = true;
@@ -420,10 +404,8 @@ namespace Dapper
             var r = cnn.Query(sb.ToString(), entity, transaction, true, commandTimeout);
 
             if (keytype == typeof(Guid) || keyHasPredefinedValue)
-            {
-                return (TKey)idProps.First().GetValue(entity, null);
-            }
-            return (TKey)r.First().id;
+                return Convert.ChangeType(propertyId.GetValue(entity, null), baseType);
+            return Convert.ChangeType(r.First().id, baseType);         
         }
 
         /// <summary>
