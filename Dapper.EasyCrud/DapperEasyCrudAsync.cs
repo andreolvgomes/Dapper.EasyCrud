@@ -405,7 +405,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static Task<int> DeleteListAsync<T>(this IDbConnection cnn, object param, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> DeleteAllAsync<T>(this IDbConnection cnn, object param, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -437,7 +437,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static Task<int> DeleteListAsync<T>(this IDbConnection cnn, string conditions, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> DeleteAllAsync<T>(this IDbConnection cnn, string conditions, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             if (string.IsNullOrEmpty(conditions))
                 throw new ArgumentException("DeleteList<T> requires a where clause");

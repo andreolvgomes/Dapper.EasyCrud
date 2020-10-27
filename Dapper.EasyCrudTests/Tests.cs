@@ -1016,7 +1016,7 @@ namespace Dapper.EasyCrudTests
                     x++;
                 } while (x < 30);
 
-                connection.DeleteSeveral<User>("Where age > 9");
+                connection.DeleteAll<User>("Where age > 9");
                 var resultlist = connection.All<User>();
                 resultlist.Count().IsEqualTo(10);
                 connection.Execute("Delete from Users");
@@ -1034,7 +1034,7 @@ namespace Dapper.EasyCrudTests
                     x++;
                 } while (x < 10);
 
-                connection.DeleteSeveral<User>(new { age = 9 });
+                connection.DeleteAll<User>(new { age = 9 });
                 var resultlist = connection.All<User>();
                 resultlist.Count().IsEqualTo(9);
                 connection.Execute("Delete from Users");
@@ -1052,7 +1052,7 @@ namespace Dapper.EasyCrudTests
                     x++;
                 } while (x < 10);
 
-                connection.DeleteSeveral<User>("where age >= @Age", new { Age = 9 });
+                connection.DeleteAll<User>("where age >= @Age", new { Age = 9 });
                 var resultlist = connection.All<User>();
                 resultlist.Count().IsEqualTo(8);
                 connection.Execute("Delete from Users");

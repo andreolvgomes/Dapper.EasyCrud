@@ -514,7 +514,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int DeleteSeveral<T>(this IDbConnection cnn, object param, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int DeleteAll<T>(this IDbConnection cnn, object param, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var masterSb = new StringBuilder();
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_DeleteWhere{param?.GetType()?.FullName}", sb =>
@@ -549,7 +549,7 @@ namespace Dapper
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>The number of records affected</returns>
-        public static int DeleteSeveral<T>(this IDbConnection cnn, string conditions, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int DeleteAll<T>(this IDbConnection cnn, string conditions, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var masterSb = new StringBuilder();
             StringBuilderCache(masterSb, $"{typeof(T).FullName}_DeleteWhere{conditions}", sb =>
