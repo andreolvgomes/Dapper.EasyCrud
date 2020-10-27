@@ -139,9 +139,6 @@ namespace Dapper
                 BuildWhere<T>(sb, whereprops, param);
             }
 
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Find<{0}>: {1}", currenttype, sb));
-
             return cnn.Query<T>(sb.ToString(), param, transaction, true, commandTimeout).FirstOrDefault();
         }
 
@@ -192,9 +189,6 @@ namespace Dapper
                     dynParms.Add("@" + prop.Name, id.GetType().GetProperty(prop.Name).GetValue(id, null));
             }
 
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Get<{0}>: {1} with Id: {2}", currenttype, sb, id));
-
             return cnn.Query<T>(sb.ToString(), dynParms, transaction, true, commandTimeout).FirstOrDefault();
         }
 
@@ -229,9 +223,6 @@ namespace Dapper
                 BuildWhere<T>(sb, whereprops, param);
             }
 
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
-
             return cnn.Query<T>(sb.ToString(), param, transaction, true, commandTimeout);
         }
 
@@ -261,9 +252,6 @@ namespace Dapper
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
             sb.AppendFormat(" from {0}", name);
             sb.Append(" " + conditions);
-
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("GetList<{0}>: {1}", currenttype, sb));
 
             return cnn.Query<T>(sb.ToString(), param, transaction, true, commandTimeout);
         }
@@ -328,9 +316,6 @@ namespace Dapper
             query = query.Replace("{OrderBy}", orderby);
             query = query.Replace("{WhereClause}", conditions);
             query = query.Replace("{Offset}", ((pageNumber - 1) * rowsPerPage).ToString());
-
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("GetListPaged<{0}>: {1}", currenttype, query));
 
             return cnn.Query<T>(query, param, transaction, true, commandTimeout);
         }
@@ -398,9 +383,6 @@ namespace Dapper
             else
                 keyHasPredefinedValue = true;
 
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Insert: {0}", sb));
-
             var r = cnn.Query(sb.ToString(), entity, transaction, true, commandTimeout);
 
             if (keytype == typeof(Guid) || keyHasPredefinedValue)
@@ -438,9 +420,6 @@ namespace Dapper
                 BuildUpdateSet(entity, sb);
                 sb.Append(" where ");
                 BuildWhere<TEntity>(sb, idProps, entity);
-
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("Update: {0}", sb));
             });
             return cnn.Execute(masterSb.ToString(), entity, transaction, commandTimeout);
         }
@@ -471,9 +450,6 @@ namespace Dapper
                 sb.AppendFormat("delete from {0}", name);
                 sb.Append(" where ");
                 BuildWhere<T>(sb, idProps, entity);
-
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("Delete: {0}", sb));
             });
             return cnn.Execute(masterSb.ToString(), entity, transaction, commandTimeout);
         }
@@ -520,9 +496,6 @@ namespace Dapper
                     dynParms.Add("@" + prop.Name, id.GetType().GetProperty(prop.Name).GetValue(id, null));
             }
 
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("Delete<{0}> {1}", currenttype, sb));
-
             return cnn.Execute(sb.ToString(), dynParms, transaction, commandTimeout);
         }
 
@@ -556,9 +529,6 @@ namespace Dapper
                     sb.Append(" where ");
                     BuildWhere<T>(sb, whereprops);
                 }
-
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
             });
             return cnn.Execute(masterSb.ToString(), param, transaction, commandTimeout);
         }
@@ -594,9 +564,6 @@ namespace Dapper
 
                 sb.AppendFormat("Delete from {0}", name);
                 sb.Append(" " + conditions);
-
-                if (Debugger.IsAttached)
-                    Trace.WriteLine(String.Format("DeleteList<{0}> {1}", currenttype, sb));
             });
             return cnn.Execute(masterSb.ToString(), param, transaction, commandTimeout);
         }
@@ -624,9 +591,6 @@ namespace Dapper
             sb.Append("Select count(1)");
             sb.AppendFormat(" from {0}", name);
             sb.Append(" " + conditions);
-
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("RecordCount<{0}>: {1}", currenttype, sb));
 
             return cnn.ExecuteScalar<int>(sb.ToString(), param, transaction, commandTimeout);
         }
@@ -659,9 +623,6 @@ namespace Dapper
                 sb.Append(" where ");
                 BuildWhere<T>(sb, whereprops);
             }
-
-            if (Debugger.IsAttached)
-                Trace.WriteLine(String.Format("RecordCount<{0}>: {1}", currenttype, sb));
 
             return cnn.ExecuteScalar<int>(sb.ToString(), param, transaction, commandTimeout);
         }
