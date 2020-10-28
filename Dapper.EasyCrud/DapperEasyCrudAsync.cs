@@ -282,7 +282,7 @@ namespace Dapper
             var r = await cnn.QueryAsync(sb.ToString(), entity, transaction, commandTimeout);
             return Convert.ChangeType(r.First().id, baseType);
         }
-        
+
         /// <summary>
         ///  <para>Updates a record or records in the database asynchronously</para>
         ///  <para>By default updates records in the table matching the class name</para>
@@ -363,7 +363,7 @@ namespace Dapper
         {
             var currenttype = typeof(T);
             var idProps = GetIdProperties(currenttype).ToList();
-            
+
             if (!idProps.Any())
                 throw new ArgumentException("Delete<T> only supports an entity with a [Key] or Id property");
 
@@ -464,11 +464,11 @@ namespace Dapper
         /// <typeparam name="T"></typeparam>
         /// <param name="cnn"></param>
         /// <param name="conditions"></param>
-        /// <param name="parameters"></param>
+        /// <param name="param"></param>
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns>Returns a count of records.</returns>
-        public static Task<int> CountAsync<T>(this IDbConnection cnn, string conditions = "", object parameters = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static Task<int> CountAsync<T>(this IDbConnection cnn, string conditions = "", object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             var currenttype = typeof(T);
             var name = GetTableName(currenttype);
@@ -477,7 +477,7 @@ namespace Dapper
             sb.AppendFormat(" from {0}", name);
             sb.Append(" " + conditions);
 
-            return cnn.ExecuteScalarAsync<int>(sb.ToString(), parameters, transaction, commandTimeout);
+            return cnn.ExecuteScalarAsync<int>(sb.ToString(), param, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -513,4 +513,3 @@ namespace Dapper
         }
     }
 }
-

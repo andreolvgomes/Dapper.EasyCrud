@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dapper.EasyCrud;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -8,6 +9,89 @@ namespace Dapper
 {
     public static partial class DapperEasyCrud
     {
+        /// <summary>
+        /// Append a Cached version of a strinbBuilderAction result based on a cacheKey
+        /// </summary>
+        /// <param name="sb"></param>
+        /// <param name="cacheKey"></param>
+        /// <param name="stringBuilderAction"></param>
+        private static void StringBuilderCache(StringBuilder sb, string cacheKey, Action<StringBuilder> stringBuilderAction)
+        {
+            if (StringBuilderCacheEnabled && StringBuilderCacheDict.TryGetValue(cacheKey, out string value))
+            {
+                sb.Append(value);
+                return;
+            }
+
+            StringBuilder newSb = new StringBuilder();
+            stringBuilderAction(newSb);
+            value = newSb.ToString();
+            StringBuilderCacheDict.AddOrUpdate(cacheKey, value, (t, v) => value);
+            sb.Append(value);
+        }
+
+        /// <summary>
+        /// Returns the current dialect name
+        /// </summary>
+        /// <returns></returns>
+        public static string GetDialect()
+        {
+            return _dialect.ToString();
+        }
+
+        /// <summary>
+        /// Sets the database dialect 
+        /// </summary>
+        /// <param name="dialect"></param>
+        public static void SetDialect(Dialect dialect)
+        {
+            switch (dialect)
+            {
+                case Dialect.PostgreSQL:
+                    _dialect = Dialect.PostgreSQL;
+                    _encapsulation = "\"{0}\"";
+                    _getIdentitySql = string.Format("SELECT LASTVAL() AS id");
+                    _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} LIMIT {RowsPerPage} OFFSET (({PageNumber}-1) * {RowsPerPage})";
+                    break;
+                case Dialect.SQLite:
+                    _dialect = Dialect.SQLite;
+                    _encapsulation = "\"{0}\"";
+                    _getIdentitySql = string.Format("SELECT LAST_INSERT_ROWID() AS id");
+                    _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} LIMIT {RowsPerPage} OFFSET (({PageNumber}-1) * {RowsPerPage})";
+                    break;
+                case Dialect.MySQL:
+                    _dialect = Dialect.MySQL;
+                    _encapsulation = "`{0}`";
+                    _getIdentitySql = string.Format("SELECT LAST_INSERT_ID() AS id");
+                    _getPagedListSql = "Select {SelectColumns} from {TableName} {WhereClause} Order By {OrderBy} LIMIT {Offset},{RowsPerPage}";
+                    break;
+                default:
+                    _dialect = Dialect.SQLServer;
+                    _encapsulation = "[{0}]";
+                    _getIdentitySql = string.Format("SELECT CAST(SCOPE_IDENTITY()  AS BIGINT) AS [id]");
+                    _getPagedListSql = "SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY {OrderBy}) AS PagedNumber, {SelectColumns} FROM {TableName} {WhereClause}) AS u WHERE PagedNumber BETWEEN (({PageNumber}-1) * {RowsPerPage} + 1) AND ({PageNumber} * {RowsPerPage})";
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Sets the table name resolver
+        /// </summary>
+        /// <param name="resolver">The resolver to use when requesting the format of a table name</param>
+        public static void SetTableNameResolver(ITableNameResolver resolver)
+        {
+            _tableNameResolver = resolver;
+        }
+
+        /// <summary>
+        /// Sets the column name resolver
+        /// </summary>
+        /// <param name="resolver">The resolver to use when requesting the format of a column name</param>
+        public static void SetColumnNameResolver(IColumnNameResolver resolver)
+        {
+            _columnNameResolver = resolver;
+        }
+
         //build update statement based on list on an entity
         private static void BuildUpdateSet<T>(T entityToUpdate, StringBuilder masterSb)
         {
