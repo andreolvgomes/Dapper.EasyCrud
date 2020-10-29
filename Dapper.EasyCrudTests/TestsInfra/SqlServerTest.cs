@@ -16,8 +16,8 @@ namespace Dapper.EasyCrudTests.TestsInfra
             Setup();
 
             var stopwatch = Stopwatch.StartNew();
-            var sqltester = new Tests(Dialect.SQLServer);
-            foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            var sqltester = new CommandsQueriesTests(Dialect.SQLServer);
+            foreach (var method in typeof(CommandsQueriesTests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 var testwatch = Stopwatch.StartNew();
                 Console.Write("Running " + method.Name + " in sql server");

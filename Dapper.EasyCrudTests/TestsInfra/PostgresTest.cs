@@ -9,15 +9,15 @@ using Npgsql;
 
 namespace Dapper.EasyCrudTests.TestsInfra
 {
-    public class Postgres : StartupDatabase
+    public class PostgresTest : StartupDatabase
     {
         public void RunTests()
         {
             Setup();
 
             var stopwatch = Stopwatch.StartNew();
-            var pgtester = new Tests(Dialect.PostgreSQL);
-            foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            var pgtester = new CommandsQueriesTests(Dialect.PostgreSQL);
+            foreach (var method in typeof(CommandsQueriesTests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 var testwatch = Stopwatch.StartNew();
                 Console.Write("Running " + method.Name + " in PostgreSQL");

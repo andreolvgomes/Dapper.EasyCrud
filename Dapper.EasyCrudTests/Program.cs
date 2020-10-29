@@ -14,11 +14,7 @@ namespace Dapper.EasyCrudTests
             new SqlServerTest().RunTests();
             new SqlLiteTest().RunTests();
             //new MySqlTest().RunTests();
-
-            //PostgreSQL tests assume port 5432 with username postgres and password postgrespass
-            //they are commented out by default since postgres setup is required to run tests
-            //SetupPg(); 
-            //RunTestsPg();   
+            //new PostgresTest().RunTests();
         }
     }
 }

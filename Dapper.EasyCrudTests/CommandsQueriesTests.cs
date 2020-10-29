@@ -12,9 +12,9 @@ using Dapper.EasyCrud;
 
 namespace Dapper.EasyCrudTests
 {
-    public class Tests
+    public class CommandsQueriesTests
     {
-        public Tests(Dialect dbtype)
+        public CommandsQueriesTests(Dialect dbtype)
         {
             _dbtype = dbtype;
         }

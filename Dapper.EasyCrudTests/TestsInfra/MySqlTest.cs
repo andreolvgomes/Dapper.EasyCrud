@@ -16,8 +16,8 @@ namespace Dapper.EasyCrudTests.TestsInfra
             Setup();
 
             var stopwatch = Stopwatch.StartNew();
-            var mysqltester = new Tests(Dialect.MySQL);
-            foreach (var method in typeof(Tests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
+            var mysqltester = new CommandsQueriesTests(Dialect.MySQL);
+            foreach (var method in typeof(CommandsQueriesTests).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
             {
                 //skip schema tests
                 if (method.Name.Contains("Schema")) continue;
