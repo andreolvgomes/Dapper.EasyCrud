@@ -30,7 +30,7 @@ namespace Dapper
         private static readonly ConcurrentDictionary<string, string> ColumnNames = new ConcurrentDictionary<string, string>();
 
         private static readonly ConcurrentDictionary<string, string> StringBuilderCacheDict = new ConcurrentDictionary<string, string>();
-        private static bool StringBuilderCacheEnabled = true;
+        public static bool StringBuilderCacheEnabled = true;
 
         private static ITableNameResolver _tableNameResolver = new TableNameResolver();
         private static IColumnNameResolver _columnNameResolver = new ColumnNameResolver();

@@ -36,7 +36,7 @@ namespace Dapper.EasyCrudTests
             }
             else if (_dbtype == Dialect.MySQL)
             {
-                connection = new MySqlConnection(String.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};", "localhost", "3306", "root", "admin", "testdb"));
+                connection = new MySqlConnection(Settings.MySql());
                 DapperEasyCrud.SetDialect(Dialect.MySQL);
             }
             else
@@ -54,12 +54,10 @@ namespace Dapper.EasyCrudTests
         {
             using (var connection = GetOpenConnection())
             {
-
                 var id = connection.Insert(new User { Name = "TestInsertWithSpecifiedTableName", Age = 10 });
                 var user = connection.FindById<User>(id);
                 user.Name.IsEqualTo("TestInsertWithSpecifiedTableName");
                 connection.Delete<User>(id);
-
             }
         }
 

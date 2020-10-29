@@ -45,6 +45,10 @@ namespace Dapper
         /// <param name="dialect"></param>
         public static void SetDialect(Dialect dialect)
         {
+            TableNames.Clear();
+            ColumnNames.Clear();
+            StringBuilderCacheDict.Clear();
+
             switch (dialect)
             {
                 case Dialect.PostgreSQL:

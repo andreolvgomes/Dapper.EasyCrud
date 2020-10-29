@@ -10,7 +10,7 @@ using Dapper.EasyCrudTests.TestsInfra.Interfaces;
 
 namespace Dapper.EasyCrudTests.TestsInfra
 {
-    public class SqlLite : StartupDatabase
+    public class SqlLiteTest : StartupDatabase
     {
         public void RunTests()
         {
@@ -28,7 +28,7 @@ namespace Dapper.EasyCrudTests.TestsInfra
             }
             stopwatch.Stop();
             Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
-            Console.Write("SQLite testing complete.");
+            Console.Write("\n\nSQLite testing complete.");
             Console.ReadKey();
         }
 

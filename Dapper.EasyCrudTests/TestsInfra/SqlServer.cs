@@ -9,7 +9,7 @@ using Dapper.EasyCrudTests.TestsInfra.Interfaces;
 
 namespace Dapper.EasyCrudTests.TestsInfra
 {
-    public class SqlServer : StartupDatabase
+    public class SqlServerTest : StartupDatabase
     {
         public void RunTests()
         {
@@ -41,7 +41,7 @@ namespace Dapper.EasyCrudTests.TestsInfra
                 catch (Exception)
                 { }
             }
-            Console.Write("SQL Server testing complete.");
+            Console.Write("\n\nSQL Server testing complete.");
             Console.ReadKey();
         }
 

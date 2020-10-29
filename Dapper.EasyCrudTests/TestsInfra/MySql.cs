@@ -9,7 +9,7 @@ using MySql.Data.MySqlClient;
 
 namespace Dapper.EasyCrudTests.TestsInfra
 {
-    public class MySql : StartupDatabase
+    public class MySqlTest : StartupDatabase
     {
         public void RunTests()
         {
@@ -31,13 +31,13 @@ namespace Dapper.EasyCrudTests.TestsInfra
             stopwatch.Stop();
             Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
 
-            Console.Write("MySQL testing complete.");
+            Console.Write("\n\nMySQL testing complete.");
             Console.ReadKey();
         }
 
         public void Setup()
         {
-            using (var connection = new MySqlConnection(String.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};", "localhost", "3306", "root", "admin", "sys")))
+            using (var connection = new MySqlConnection(Settings.MySql("sys")))
             {
                 connection.Open();
                 // drop  database 
@@ -46,7 +46,7 @@ namespace Dapper.EasyCrudTests.TestsInfra
             }
             System.Threading.Thread.Sleep(1000);
 
-            using (var connection = new MySqlConnection(String.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};", "localhost", "3306", "root", "admin", "testdb")))
+            using (var connection = new MySqlConnection(Settings.MySql()))
             {
                 connection.Open();
                 connection.Execute(@" create table Users (Id INTEGER PRIMARY KEY AUTO_INCREMENT, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime default current_timestamp ) ");
@@ -58,7 +58,8 @@ namespace Dapper.EasyCrudTests.TestsInfra
                 connection.Execute(@" create table StrangeColumnNames (ItemId INTEGER PRIMARY KEY AUTO_INCREMENT, word nvarchar(100) not null, colstringstrangeword nvarchar(100) not null, KeywordedProperty nvarchar(100) null) ");
                 connection.Execute(@" create table UserWithoutAutoIdentity (Id INTEGER PRIMARY KEY, Name nvarchar(100) not null, Age int not null) ");
                 connection.Execute(@" create table IgnoreColumns (Id INTEGER PRIMARY KEY AUTO_INCREMENT, IgnoreInsert nvarchar(100) null, IgnoreUpdate nvarchar(100) null, IgnoreSelect nvarchar(100)  null, IgnoreAll nvarchar(100) null) ");
-                connection.Execute(@" CREATE table KeyMaster (Key1 INTEGER NOT NULL, Key2 INTEGER NOT NULL, CONSTRAINT PK_KeyMaster PRIMARY KEY CLUSTERED (Key1 ASC, Key2 ASC))");
+                connection.Execute(@" create table KeyMaster (Key1 INTEGER NOT NULL, Key2 INTEGER NOT NULL, CONSTRAINT PK_KeyMaster PRIMARY KEY CLUSTERED (Key1 ASC, Key2 ASC))");
+                connection.Execute(@" create table stringtest(stringkey varchar(50) NOT NULL,name varchar(50) NOT NULL, CONSTRAINT PK_stringkey PRIMARY KEY CLUSTERED (stringkey ASC))");
             }
         }
     }
