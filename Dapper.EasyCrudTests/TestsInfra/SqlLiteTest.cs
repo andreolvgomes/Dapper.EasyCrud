@@ -41,6 +41,7 @@ namespace Dapper.EasyCrudTests.TestsInfra
             {
                 connection.Open();
                 connection.Execute(@" create table Users (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime default current_timestamp ) ");
+                connection.Execute(@" create table DateTimeAt (Id INTEGER PRIMARY KEY AUTOINCREMENT, CreateAt datetime, UpdateAt datetime)");
                 connection.Execute(@" create table Car (CarId INTEGER PRIMARY KEY AUTOINCREMENT, Id INTEGER null, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
                 connection.Execute(@" create table BigCar (CarId INTEGER PRIMARY KEY AUTOINCREMENT, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
                 connection.Execute(@" insert into BigCar (CarId,Make,Model) Values (2147483649,'car','car') ");
