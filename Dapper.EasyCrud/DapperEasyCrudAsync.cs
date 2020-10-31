@@ -270,6 +270,8 @@ namespace Dapper
                 }
             }
 
+            SetValueGuidEmpty(entity);
+
             if ((keytype == typeof(int) || keytype == typeof(long)) && Convert.ToInt64(idProps.First().GetValue(entity, null)) == 0)
                 sb.Append(";" + _getIdentitySql);
             else

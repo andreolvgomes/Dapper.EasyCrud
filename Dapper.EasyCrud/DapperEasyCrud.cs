@@ -304,6 +304,8 @@ namespace Dapper
                 sb.Append(";select '" + propertyId.GetValue(entity, null) + "' as id");
             }
 
+            SetValueGuidEmpty(entity);
+
             if ((keytype == typeof(int) || keytype == typeof(long)) && Convert.ToInt64(propertyId.GetValue(entity, null)) == 0)
                 sb.Append(";" + _getIdentitySql);
             else
@@ -314,7 +316,7 @@ namespace Dapper
             if (keytype == typeof(Guid) || keyHasPredefinedValue)
                 return Convert.ChangeType(propertyId.GetValue(entity, null), baseType);
             return Convert.ChangeType(r.First().id, baseType);
-        }
+        }       
 
         /// <summary>
         /// <para>Updates a record or records in the database with only the properties of TEntity</para>
@@ -343,13 +345,13 @@ namespace Dapper
                 sb.AppendFormat("update {0}", name);
 
                 sb.AppendFormat(" set ");
-                BuildUpdateSet(entity, sb);                
+                BuildUpdateSet(entity, sb);
                 sb.Append(" where ");
                 BuildWhere<TEntity>(sb, idProps, entity);
             });
             SetUpdateAt<TEntity>(entity);
             return cnn.Execute(masterSb.ToString(), entity, transaction, commandTimeout);
-        }       
+        }
 
         /// <summary>
         /// <para>Deletes a record or records in the database that match the object passed in</para>

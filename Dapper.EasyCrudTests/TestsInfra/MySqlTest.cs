@@ -29,10 +29,10 @@ namespace Dapper.EasyCrudTests.TestsInfra
                 Console.WriteLine(" - OK! {0}ms", testwatch.ElapsedMilliseconds);
             }
             stopwatch.Stop();
-            Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
-
             Console.Write("\n\nMySQL testing complete.");
-            Console.ReadKey();
+            Console.WriteLine("\nTime elapsed: {0}", stopwatch.Elapsed);
+            
+            //Console.ReadKey();
         }
 
         public void Setup()
@@ -49,18 +49,20 @@ namespace Dapper.EasyCrudTests.TestsInfra
             using (var connection = new MySqlConnection(Settings.MySql()))
             {
                 connection.Open();
-                connection.Execute(@" create table Users (Id INTEGER PRIMARY KEY AUTO_INCREMENT, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime default current_timestamp ) ");
-                connection.Execute(@" create table DateTimeAt (Id INTEGER PRIMARY KEY AUTO_INCREMENT, CreateAt datetime, UpdateAt datetime)");
+                connection.Execute(@" create table Users (Id INTEGER PRIMARY KEY AUTO_INCREMENT, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime default current_timestamp ) ");                
                 connection.Execute(@" create table Car (CarId INTEGER PRIMARY KEY AUTO_INCREMENT, Id INTEGER null, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
                 connection.Execute(@" create table BigCar (CarId BIGINT PRIMARY KEY AUTO_INCREMENT, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
                 connection.Execute(@" insert into BigCar (CarId,Make,Model) Values (2147483649,'car','car') ");
                 connection.Execute(@" create table City (Name nvarchar(100) not null, Population int not null) ");
-                connection.Execute(@" CREATE TABLE GUIDTest(Id CHAR(38) NOT NULL,name varchar(50) NOT NULL, CONSTRAINT PK_GUIDTest PRIMARY KEY (Id ASC))");
+                connection.Execute(@" CREATE TABLE GUIDTest(Id CHAR(36) NOT NULL,name varchar(50) NOT NULL, CONSTRAINT PK_GUIDTest PRIMARY KEY (Id ASC))");
                 connection.Execute(@" create table StrangeColumnNames (ItemId INTEGER PRIMARY KEY AUTO_INCREMENT, word nvarchar(100) not null, colstringstrangeword nvarchar(100) not null, KeywordedProperty nvarchar(100) null) ");
                 connection.Execute(@" create table UserWithoutAutoIdentity (Id INTEGER PRIMARY KEY, Name nvarchar(100) not null, Age int not null) ");
                 connection.Execute(@" create table IgnoreColumns (Id INTEGER PRIMARY KEY AUTO_INCREMENT, IgnoreInsert nvarchar(100) null, IgnoreUpdate nvarchar(100) null, IgnoreSelect nvarchar(100)  null, IgnoreAll nvarchar(100) null) ");
                 connection.Execute(@" create table KeyMaster (Key1 INTEGER NOT NULL, Key2 INTEGER NOT NULL, CONSTRAINT PK_KeyMaster PRIMARY KEY CLUSTERED (Key1 ASC, Key2 ASC))");
                 connection.Execute(@" create table stringtest(stringkey varchar(50) NOT NULL,name varchar(50) NOT NULL, CONSTRAINT PK_stringkey PRIMARY KEY CLUSTERED (stringkey ASC))");
+
+                connection.Execute(@" create table DateTimeAt (Id INTEGER PRIMARY KEY AUTO_INCREMENT, CreateAt datetime, UpdateAt datetime)");
+                connection.Execute(@" create table GuidEmpty (Id INTEGER PRIMARY KEY AUTO_INCREMENT, Identifier CHAR(36) NOT NULL)");
             }
         }
     }

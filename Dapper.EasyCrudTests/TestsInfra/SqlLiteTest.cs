@@ -27,9 +27,9 @@ namespace Dapper.EasyCrudTests.TestsInfra
                 Console.WriteLine(" - OK! {0}ms", testwatch.ElapsedMilliseconds);
             }
             stopwatch.Stop();
-            Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
             Console.Write("\n\nSQLite testing complete.");
-            Console.ReadKey();
+            Console.WriteLine("\nTime elapsed: {0}", stopwatch.Elapsed);            
+            //Console.ReadKey();
         }
 
         public void Setup()
@@ -40,8 +40,7 @@ namespace Dapper.EasyCrudTests.TestsInfra
             using (connection)
             {
                 connection.Open();
-                connection.Execute(@" create table Users (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime default current_timestamp ) ");
-                connection.Execute(@" create table DateTimeAt (Id INTEGER PRIMARY KEY AUTOINCREMENT, CreateAt datetime, UpdateAt datetime)");
+                connection.Execute(@" create table Users (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime default current_timestamp ) ");                
                 connection.Execute(@" create table Car (CarId INTEGER PRIMARY KEY AUTOINCREMENT, Id INTEGER null, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
                 connection.Execute(@" create table BigCar (CarId INTEGER PRIMARY KEY AUTOINCREMENT, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
                 connection.Execute(@" insert into BigCar (CarId,Make,Model) Values (2147483649,'car','car') ");
@@ -52,6 +51,9 @@ namespace Dapper.EasyCrudTests.TestsInfra
                 connection.Execute(@" create table IgnoreColumns (Id INTEGER PRIMARY KEY AUTOINCREMENT, IgnoreInsert nvarchar(100) null, IgnoreUpdate nvarchar(100) null, IgnoreSelect nvarchar(100)  null, IgnoreAll nvarchar(100) null) ");
                 connection.Execute(@" CREATE TABLE KeyMaster (Key1 INTEGER NOT NULL, Key2 INTEGER NOT NULL, PRIMARY KEY ([Key1], [Key2]))");
                 connection.Execute(@" CREATE TABLE stringtest (stringkey nvarchar(50) NOT NULL,name nvarchar(50) NOT NULL, PRIMARY KEY ([stringkey] ASC))");
+
+                connection.Execute(@" create table DateTimeAt (Id INTEGER PRIMARY KEY AUTOINCREMENT, CreateAt datetime, UpdateAt datetime)");
+                connection.Execute(@" create table GuidEmpty (Id INTEGER PRIMARY KEY AUTOINCREMENT, Identifier [uniqueidentifier] NOT NULL)");
             }
         }
     }

@@ -14,8 +14,10 @@ namespace Dapper.EasyCrudTests
         {
             new SqlServerTest().RunTests();
             new SqlLiteTest().RunTests();
-            //new MySqlTest().RunTests();
+            new MySqlTest().RunTests();
             //new PostgresTest().RunTests();
+
+            Console.ReadKey();
         }
     }
 }

@@ -4,15 +4,23 @@ using System.Text;
 
 namespace Dapper.EasyCrudTests
 {
+    [Table("GuidEmpty")]
+    public class GuidEmpty
+    {
+        [Key]
+        public int Id { get; set; }
+        public Guid Identifier { get; set; }
+    }
+
     [Table("DateTimeAt")]
     public class DateTimeAt
     {
         [Key]
         public int Id { get; set; }
         [CreateAt]
-        public DateTime CreateAt { get; set; }
+        public DateTime? CreateAt { get; set; }
         [UpdateAt]
-        public DateTime UpdateAt { get; set; }
+        public DateTime? UpdateAt { get; set; }
     }
 
     [Table("Users")]

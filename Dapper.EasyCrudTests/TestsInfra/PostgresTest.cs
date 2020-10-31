@@ -24,11 +24,12 @@ namespace Dapper.EasyCrudTests.TestsInfra
                 method.Invoke(pgtester, null);
                 Console.WriteLine(" - OK! {0}ms", testwatch.ElapsedMilliseconds);
             }
+
             stopwatch.Stop();
+            Console.Write("PostgreSQL testing complete.");
             Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
 
-            Console.Write("PostgreSQL testing complete.");
-            Console.ReadKey();
+            //Console.ReadKey();
         }
 
         public void Setup()

@@ -9,12 +9,41 @@ namespace Dapper
 {
     public static partial class DapperEasyCrud
     {
+        /// <summary>
+        /// Define value to guid if empty
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="entity"></param>
+        private static void SetValueGuidEmpty<TEntity>(TEntity entity)
+        {
+            var propertiesGuid = entity.GetType().GetProperties().Where(c => c.PropertyType == typeof(Guid));
+            foreach (PropertyInfo property in propertiesGuid)
+            {
+                var guidvalue = (Guid)property.GetValue(entity, null);
+                if (guidvalue == Guid.Empty)
+                {
+                    var newguid = SequentialGuid();
+                    property.SetValue(entity, newguid, null);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Define datetime to property UpdateAt
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="entity"></param>
         private static void SetUpdateAt<TEntity>(TEntity entity)
         {
             foreach (PropertyInfo property in entity.GetType().GetProperties().Where(PropertyUpdateAt))
                 property.SetValue(entity, DateTime.Now);
         }
 
+        /// <summary>
+        /// Get properties with attribute UpdateAtAttribute
+        /// </summary>
+        /// <param name="property"></param>
+        /// <returns></returns>
         private static bool PropertyUpdateAt(PropertyInfo property)
         {
             object[] attributes = property.GetCustomAttributes(typeof(UpdateAtAttribute), false);
@@ -27,6 +56,11 @@ namespace Dapper
             return false;
         }
 
+        /// <summary>
+        /// Define datetime to property CreateAt
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <param name="entity"></param>
         private static void SetCreateAt<TEntity>(TEntity entity)
         {
             foreach (PropertyInfo property in entity.GetType().GetProperties().Where(PropertyCreateAt))
@@ -35,6 +69,11 @@ namespace Dapper
             SetUpdateAt<TEntity>(entity);
         }
 
+        /// <summary>
+        /// Get properties with attribute CreateAtAttribute
+        /// </summary>
+        /// <param name="property"></param>
+        /// <returns></returns>
         private static bool PropertyCreateAt(PropertyInfo property)
         {
             object[] attributes = property.GetCustomAttributes(typeof(CreateAtAttribute), false);

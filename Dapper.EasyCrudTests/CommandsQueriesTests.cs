@@ -1203,8 +1203,54 @@ namespace Dapper.EasyCrudTests
             using (var connection = GetOpenConnection())
             {
                 var id = connection.Insert<DateTimeAt>(new DateTimeAt() { });
-                connection.Update<DateTimeAt>(connection.FindById<DateTimeAt>(id));
-                connection.Delete<IgnoreColumns>(id);
+                var model = connection.FindById<DateTimeAt>(id);
+                model.CreateAt.IsNotNull();
+                model.UpdateAt.IsNotNull();
+
+                model.UpdateAt = null;
+                connection.Update<DateTimeAt>(model);
+                model.UpdateAt.IsNotNull();
+
+                connection.Delete<DateTimeAt>(id);
+            }
+        }
+
+        public async void CreateAndUpdateAtAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = await connection.InsertAsync<DateTimeAt>(new DateTimeAt() { });
+                var test = await connection.FindByIdAsync<DateTimeAt>(id);
+
+                var model = await connection.FindByIdAsync<DateTimeAt>(id);
+                model.CreateAt.IsNotNull();
+                model.UpdateAt.IsNotNull();
+
+                model.UpdateAt = null;
+                await connection.UpdateAsync<DateTimeAt>(model);
+                model.UpdateAt.IsNotNull();
+
+                await connection.DeleteAsync<DateTimeAt>(id);
+            }
+        }
+
+        public void GuidEmptyTest()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert<GuidEmpty>(new GuidEmpty() { });
+                GuidEmpty guidEmpty = connection.FindById<GuidEmpty>(id);
+                guidEmpty.Identifier.IsNotNull();
+            }
+        }
+
+        public async void GuidEmptyTestAsync()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = await connection.InsertAsync<GuidEmpty>(new GuidEmpty() { });
+                GuidEmpty guidEmpty = await connection.FindByIdAsync<GuidEmpty>(id);
+                guidEmpty.Identifier.IsNotNull();
             }
         }
     }
