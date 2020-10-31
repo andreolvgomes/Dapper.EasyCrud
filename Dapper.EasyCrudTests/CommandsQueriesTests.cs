@@ -209,6 +209,10 @@ namespace Dapper.EasyCrudTests
 
                 var user = connection.All<User>("where Name like 'TestFilteredWithSQLGetList%' and Age = 10");
                 user.Count().IsEqualTo(3);
+
+                var user2 = connection.All<User>("Name like 'TestFilteredWithSQLGetList%' and Age = 10");
+                user2.Count().IsEqualTo(3);
+
                 connection.Execute("Delete from Users");
             }
         }
@@ -246,6 +250,10 @@ namespace Dapper.EasyCrudTests
 
                 var user = connection.All<User>("where Age > @Age", new { Age = 10 });
                 user.Count().IsEqualTo(1);
+
+                var user2 = connection.All<User>("Age > @Age", new { Age = 10 });
+                user2.Count().IsEqualTo(1);
+
                 connection.Execute("Delete from Users");
             }
         }

@@ -149,7 +149,7 @@ namespace Dapper
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
             sb.AppendFormat(" from {0}", name);
 
-            sb.Append(" " + conditions);
+            sb.Append(" " + TreatConditions(conditions));
 
             return cnn.QueryAsync<T>(sb.ToString(), parameters, transaction, commandTimeout);
         }
@@ -253,6 +253,7 @@ namespace Dapper
             sb.Append("values");
             sb.Append(" (");
             BuildInsertValues<TEntity>(sb);
+            SetCreateAt<TEntity>(entity);
             sb.Append(")");
 
             if (keytype == typeof(Guid))
@@ -311,6 +312,7 @@ namespace Dapper
             BuildUpdateSet(entity, sb);
             sb.Append(" where ");
             BuildWhere<TEntity>(sb, idProps, entity);
+            SetUpdateAt<TEntity>(entity);
 
             System.Threading.CancellationToken cancelToken = token ?? default(System.Threading.CancellationToken);
             return cnn.ExecuteAsync(new CommandDefinition(sb.ToString(), entity, transaction, commandTimeout, cancellationToken: cancelToken));

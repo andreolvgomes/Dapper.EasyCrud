@@ -168,9 +168,17 @@ namespace Dapper
             //create a new empty instance of the type to get the base properties
             BuildSelect(sb, GetScaffoldableProperties<T>().ToArray());
             sb.AppendFormat(" from {0}", name);
-            sb.Append(" " + conditions);
+            sb.Append(" " + TreatConditions(conditions));
 
             return cnn.Query<T>(sb.ToString(), param, transaction, true, commandTimeout);
+        }
+
+        private static string TreatConditions(string conditions)
+        {
+            if (string.IsNullOrEmpty(conditions)) return string.Empty;
+            if (!conditions.ToUpper().StartsWith("WHERE"))
+                return "where " + conditions;
+            return conditions;
         }
 
         /// <summary>
