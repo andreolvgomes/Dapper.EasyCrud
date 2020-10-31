@@ -9,6 +9,44 @@ namespace Dapper
 {
     public static partial class DapperEasyCrud
     {
+        private static void SetUpdateAt<TEntity>(TEntity entity)
+        {
+            foreach (PropertyInfo property in entity.GetType().GetProperties().Where(PropertyUpdateAt))
+                property.SetValue(entity, DateTime.Now);
+        }
+
+        private static bool PropertyUpdateAt(PropertyInfo property)
+        {
+            object[] attributes = property.GetCustomAttributes(typeof(UpdateAtAttribute), false);
+            if (attributes.Length == 1)
+            {
+                UpdateAtAttribute write = (UpdateAtAttribute)attributes[0];
+                if (write != null)
+                    return true;
+            }
+            return false;
+        }
+
+        private static void SetCreateAt<TEntity>(TEntity entity)
+        {
+            foreach (PropertyInfo property in entity.GetType().GetProperties().Where(PropertyCreateAt))
+                property.SetValue(entity, DateTime.Now);
+            // define updateAt too
+            SetUpdateAt<TEntity>(entity);
+        }
+
+        private static bool PropertyCreateAt(PropertyInfo property)
+        {
+            object[] attributes = property.GetCustomAttributes(typeof(CreateAtAttribute), false);
+            if (attributes.Length == 1)
+            {
+                CreateAtAttribute write = (CreateAtAttribute)attributes[0];
+                if (write != null)
+                    return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Append a Cached version of a strinbBuilderAction result based on a cacheKey
         /// </summary>
@@ -190,13 +228,13 @@ namespace Dapper
                           && property.GetCustomAttributes(true).Any(attr => attr.GetType().Name == typeof(KeyAttribute).Name)
                           && property.GetCustomAttributes(true).All(attr => attr.GetType().Name != typeof(RequiredAttribute).Name))
                         continue;
-                    if (property.GetCustomAttributes(true).Any(attr =>
-                        attr.GetType().Name == typeof(IgnoreInsertAttribute).Name ||
-                        attr.GetType().Name == typeof(NotMappedAttribute).Name ||
-                        attr.GetType().Name == typeof(ReadOnlyAttribute).Name && IsReadOnly(property))
-                    ) continue;
 
-                    if (property.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) && property.GetCustomAttributes(true).All(attr => attr.GetType().Name != typeof(RequiredAttribute).Name) && property.PropertyType != typeof(Guid)) continue;
+                    if (property.GetCustomAttributes(true).Any(attr => attr.GetType().Name == typeof(IgnoreInsertAttribute).Name ||
+                        attr.GetType().Name == typeof(NotMappedAttribute).Name || attr.GetType().Name == typeof(ReadOnlyAttribute).Name && IsReadOnly(property)))
+                        continue;
+
+                    if (property.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) && property.GetCustomAttributes(true).All(attr => attr.GetType().Name != typeof(RequiredAttribute).Name) && property.PropertyType != typeof(Guid))
+                        continue;
 
                     sb.AppendFormat("@{0}", property.Name);
                     if (i < props.Count() - 1)

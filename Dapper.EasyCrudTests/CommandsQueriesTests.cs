@@ -61,7 +61,7 @@ namespace Dapper.EasyCrudTests
             }
         }
 
-        public void TestMassInsert() 
+        public void TestMassInsert()
         {
             //With cached strinb builder, this tests runs 2.5X faster (From 400ms to 180ms)
             using (var connection = GetOpenConnection())
@@ -1190,5 +1190,14 @@ namespace Dapper.EasyCrudTests
             }
         }
 
+        public void CreateAndUpdateAt()
+        {
+            using (var connection = GetOpenConnection())
+            {
+                var id = connection.Insert<DateTimeAt>(new DateTimeAt() { });
+                connection.Update<DateTimeAt>(connection.FindById<DateTimeAt>(id));
+                connection.Delete<IgnoreColumns>(id);
+            }
+        }
     }
 }

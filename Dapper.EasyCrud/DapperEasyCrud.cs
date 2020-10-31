@@ -278,6 +278,7 @@ namespace Dapper
             sb.Append("values");
             sb.Append(" (");
             BuildInsertValues<TEntity>(sb);
+            SetCreateAt<TEntity>(entity);
             sb.Append(")");
 
             if (keytype == typeof(Guid))
@@ -334,12 +335,13 @@ namespace Dapper
                 sb.AppendFormat("update {0}", name);
 
                 sb.AppendFormat(" set ");
-                BuildUpdateSet(entity, sb);
+                BuildUpdateSet(entity, sb);                
                 sb.Append(" where ");
                 BuildWhere<TEntity>(sb, idProps, entity);
             });
+            SetUpdateAt<TEntity>(entity);
             return cnn.Execute(masterSb.ToString(), entity, transaction, commandTimeout);
-        }
+        }       
 
         /// <summary>
         /// <para>Deletes a record or records in the database that match the object passed in</para>

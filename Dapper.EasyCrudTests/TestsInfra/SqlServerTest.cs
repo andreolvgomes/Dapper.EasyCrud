@@ -64,6 +64,7 @@ namespace Dapper.EasyCrudTests.TestsInfra
             {
                 connection.Open();
                 connection.Execute(@" create table Users (Id int IDENTITY(1,1) not null, Name nvarchar(100) not null, Age int not null, ScheduledDayOff int null, CreatedDate datetime DEFAULT(getdate())) ");
+                connection.Execute(@" create table DateTimeAt (Id int IDENTITY(1,1) not null, CreateAt datetime, UpdateAt datetime)");
                 connection.Execute(@" create table Car (CarId int IDENTITY(1,1) not null, Id int null, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
                 connection.Execute(@" create table BigCar (CarId bigint IDENTITY(2147483650,1) not null, Make nvarchar(100) not null, Model nvarchar(100) not null) ");
                 connection.Execute(@" create table City (Name nvarchar(100) not null, Population int not null) ");

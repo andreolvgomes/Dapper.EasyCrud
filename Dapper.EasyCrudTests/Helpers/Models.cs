@@ -4,6 +4,17 @@ using System.Text;
 
 namespace Dapper.EasyCrudTests
 {
+    [Table("DateTimeAt")]
+    public class DateTimeAt
+    {
+        [Key]
+        public int Id { get; set; }
+        [CreateAt]
+        public DateTime CreateAt { get; set; }
+        [UpdateAt]
+        public DateTime UpdateAt { get; set; }
+    }
+
     [Table("Users")]
     public class UserEditableSettings
     {
